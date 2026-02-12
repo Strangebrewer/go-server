@@ -11,13 +11,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var NarfCollection *mongo.Collection
-var mongoErrMessage string
+type Mongo struct {
+	Client *mongo.Client
+}
 
-func InitMongoConnection() (string, error) {
-	cfg := config.GetCurrentCfg()
-
-	var err error
+func InitMongoConnection(cfg config.Config) (*Mongo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -28,13 +26,10 @@ func InitMongoConnection() (string, error) {
 		cfg.MongoDBCluster,
 	)
 
-	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
-		mongoErrMessage = "Error opening MongoDB connection: " + err.Error()
-		return mongoErrMessage, err
+		return nil, err
 	}
 
-	NarfCollection = mongoClient.Database("derp").Collection("narf")
-
-	return "", nil
+	return &Mongo{Client: client}, nil
 }

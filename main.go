@@ -1,36 +1,35 @@
 package main
 
 import (
-	"context"
 	"log"
 
+	"github.com/Strangebrewer/go-server/app"
 	"github.com/Strangebrewer/go-server/config"
 	"github.com/Strangebrewer/go-server/database"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/Strangebrewer/go-server/recipe"
+	"github.com/Strangebrewer/go-server/server"
 )
-
-type Narf struct {
-	Id   string `json:"id" bson:"id"`
-	Name string `json:"name" bson:"name"`
-	Age  int    `json:"age" bson:"age"`
-	Role string `json:"role" bson:"role"`
-}
 
 func main() {
 	cfg := config.InitConfig()
 	cfg.LoadEnvVariables()
 
-	if _, err := database.InitMongoConnection(); err != nil {
-		log.Fatal(err)
+	mongoConnection, err := database.InitMongoConnection(*cfg)
+	if err != nil {
+		log.Fatalf("mongo init failed: %v", err)
 	}
 
-	filter := bson.M{"id": "abc123"}
-	var narf Narf
-	err := database.NarfCollection.FindOne(context.TODO(), filter).Decode(&narf)
-	if err == mongo.ErrNoDocuments {
-		log.Printf("no narfing for id %s", "69856ee2e52d4e39c2ed8d9a")
+	recipeCollection := mongoConnection.Client.Database(cfg.MongoDBName).Collection("recipe")
+
+	recipeStore := recipe.NewStore(recipeCollection)
+
+	application := &app.Application{
+		RecipeStore: recipeStore,
 	}
 
-	log.Printf("narf!! %+v", narf)
+	s := server.New("127.0.0.1:8080", application)
+
+	log.Printf("listening on %s", s.HTTPServer.Addr)
+	err = s.HTTPServer.ListenAndServe()
+	log.Printf("ListenAndServe returned: %v", err)
 }
