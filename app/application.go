@@ -1,7 +1,7 @@
 package app
 
-import "github.com/Strangebrewer/go-server/recipe"
+import "github.com/Strangebrewer/go-server/thing"
 
 type Application struct {
-	RecipeStore *recipe.Store
+	ThingStore *thing.Store
 }

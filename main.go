@@ -6,8 +6,8 @@ import (
 	"github.com/Strangebrewer/go-server/app"
 	"github.com/Strangebrewer/go-server/config"
 	"github.com/Strangebrewer/go-server/database"
-	"github.com/Strangebrewer/go-server/recipe"
 	"github.com/Strangebrewer/go-server/server"
+	"github.com/Strangebrewer/go-server/thing"
 )
 
 func main() {
@@ -19,12 +19,12 @@ func main() {
 		log.Fatalf("mongo init failed: %v", err)
 	}
 
-	recipeCollection := mongoConnection.Client.Database(cfg.MongoDBName).Collection("recipe")
+	thingCollection := mongoConnection.Client.Database(cfg.MongoDBName).Collection("thing")
 
-	recipeStore := recipe.NewStore(recipeCollection)
+	thingStore := thing.NewStore(thingCollection)
 
 	application := &app.Application{
-		RecipeStore: recipeStore,
+		ThingStore: thingStore,
 	}
 
 	s := server.New("127.0.0.1:8080", application)
