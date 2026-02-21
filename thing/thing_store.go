@@ -10,15 +10,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Store struct {
+type ThingStore struct {
 	collection *mongo.Collection
 }
 
-func NewStore(collection *mongo.Collection) *Store {
-	return &Store{collection: collection}
+func NewStore(collection *mongo.Collection) *ThingStore {
+	return &ThingStore{collection: collection}
 }
 
-func (s *Store) GetAll(ctx context.Context) ([]Thing, error) {
+func (s *ThingStore) GetAll(ctx context.Context) ([]Thing, error) {
 	cursor, err := s.collection.Find(ctx, map[string]interface{}{})
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (s *Store) GetAll(ctx context.Context) ([]Thing, error) {
 	return things, nil
 }
 
-func (s *Store) GetOne(ctx context.Context, id string) (*Thing, error) {
+func (s *ThingStore) GetOne(ctx context.Context, id string) (*Thing, error) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (s *Store) GetOne(ctx context.Context, id string) (*Thing, error) {
 	return &thing, nil
 }
 
-func (s *Store) Create(ctx context.Context, thing *Thing) (*mongo.InsertOneResult, error) {
+func (s *ThingStore) Create(ctx context.Context, thing *Thing) (*mongo.InsertOneResult, error) {
 	result, err := s.collection.InsertOne(ctx, thing)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (s *Store) Create(ctx context.Context, thing *Thing) (*mongo.InsertOneResul
 	return result, nil
 }
 
-func (s *Store) Update(ctx context.Context, id string, thing Thing) (*Thing, error) {
+func (s *ThingStore) Update(ctx context.Context, id string, thing Thing) (*Thing, error) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (s *Store) Update(ctx context.Context, id string, thing Thing) (*Thing, err
 	return &updated, nil
 }
 
-func (s *Store) Delete(ctx context.Context, id string) (*mongo.DeleteResult, error) {
+func (s *ThingStore) Delete(ctx context.Context, id string) (*mongo.DeleteResult, error) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err

@@ -4,10 +4,12 @@ import (
 	"log"
 
 	"github.com/Strangebrewer/go-server/app"
+	"github.com/Strangebrewer/go-server/auth"
 	"github.com/Strangebrewer/go-server/config"
 	"github.com/Strangebrewer/go-server/database"
 	"github.com/Strangebrewer/go-server/server"
 	"github.com/Strangebrewer/go-server/thing"
+	"github.com/Strangebrewer/go-server/users"
 )
 
 func main() {
@@ -19,12 +21,21 @@ func main() {
 		log.Fatalf("mongo init failed: %v", err)
 	}
 
-	thingCollection := mongoConnection.Client.Database(cfg.MongoDBName).Collection("thing")
+	db := mongoConnection.Client.Database(cfg.MongoDBName)
 
+	thingCollection := db.Collection("thing")
 	thingStore := thing.NewStore(thingCollection)
+
+	sessionsCollection := db.Collection("sessions")
+	authStore := auth.NewAuthStore(sessionsCollection)
+
+	usersCollection := db.Collection("users")
+	usersStore := users.NewStore(usersCollection)
 
 	application := &app.Application{
 		ThingStore: thingStore,
+		AuthStore:  authStore,
+		UserStore:  usersStore,
 	}
 
 	s := server.New("127.0.0.1:8080", application)
