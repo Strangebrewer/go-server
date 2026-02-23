@@ -18,8 +18,8 @@ func registerRoutes(r chi.Router, application *app.Application) {
 	_ = application.UserStore.EnsureIndexes(context.Background())
 
 	cookeCfg := auth.CookieConfig{
-		Secure:   false,                // local http
-		SameSite: http.SameSiteLaxMode, // fine for Postman + local dev
+		Secure:   false,                 // local http
+		SameSite: http.SameSiteNoneMode, // fine for Postman + local dev
 		TTL:      7 * 24 * time.Hour,
 	}
 

@@ -38,7 +38,7 @@ func main() {
 		UserStore:  usersStore,
 	}
 
-	s := server.New("127.0.0.1:8080", application)
+	s := server.New("localhost:8080", application)
 
 	log.Printf("listening on %s", s.HTTPServer.Addr)
 	err = s.HTTPServer.ListenAndServe()
