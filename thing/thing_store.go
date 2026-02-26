@@ -14,7 +14,7 @@ type ThingStore struct {
 	collection *mongo.Collection
 }
 
-func NewStore(collection *mongo.Collection) *ThingStore {
+func NewThingStore(collection *mongo.Collection) *ThingStore {
 	return &ThingStore{collection: collection}
 }
 

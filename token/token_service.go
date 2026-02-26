@@ -23,7 +23,7 @@ var (
 	ErrTokenExpired       = errors.New("token expired")
 )
 
-type Service struct {
+type TokenService struct {
 	store      *TokenStore
 	priv       *rsa.PrivateKey
 	pub        *rsa.PublicKey
@@ -32,7 +32,7 @@ type Service struct {
 	refreshTTL time.Duration
 }
 
-func NewService(store *TokenStore, privateKeyPEM string, publicKeyPEM string, refreshPepper string) (*Service, error) {
+func NewTokenService(store *TokenStore, privateKeyPEM string, publicKeyPEM string, refreshPepper string) (*TokenService, error) {
 	priv, err := parseRSAPrivateKey(privateKeyPEM)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func NewService(store *TokenStore, privateKeyPEM string, publicKeyPEM string, re
 		return nil, err
 	}
 
-	return &Service{
+	return &TokenService{
 		store:      store,
 		priv:       priv,
 		pub:        pub,
@@ -57,7 +57,7 @@ type ExchangeResult struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-func (s *Service) IssueForUser(ctx context.Context, userID primitive.ObjectID) (*ExchangeResult, error) {
+func (s *TokenService) IssueForUser(ctx context.Context, userID primitive.ObjectID) (*ExchangeResult, error) {
 	access, err := s.mintAccessJWT(userID)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func (s *Service) IssueForUser(ctx context.Context, userID primitive.ObjectID) (
 }
 
 // Exchange rotates refresh token (revoke old, mint/store new) and returns new pair.
-func (s *Service) Exchange(ctx context.Context, refreshPlain string) (*ExchangeResult, error) {
+func (s *TokenService) Exchange(ctx context.Context, refreshPlain string) (*ExchangeResult, error) {
 	hash := s.hashRefresh(refreshPlain)
 
 	old, err := s.store.FindActiveRefreshByHash(ctx, hash)
@@ -98,7 +98,7 @@ func (s *Service) Exchange(ctx context.Context, refreshPlain string) (*ExchangeR
 	return s.IssueForUser(ctx, old.UserID)
 }
 
-func (s *Service) Revoke(ctx context.Context, refreshPlain string) error {
+func (s *TokenService) Revoke(ctx context.Context, refreshPlain string) error {
 	hash := s.hashRefresh(refreshPlain)
 
 	old, err := s.store.FindActiveRefreshByHash(ctx, hash)
@@ -109,7 +109,7 @@ func (s *Service) Revoke(ctx context.Context, refreshPlain string) error {
 	return s.store.RevokeByID(ctx, old.ID)
 }
 
-func (s *Service) mintAccessJWT(userID primitive.ObjectID) (string, error) {
+func (s *TokenService) mintAccessJWT(userID primitive.ObjectID) (string, error) {
 	now := time.Now().UTC()
 
 	claims := jwt.MapClaims{
@@ -124,7 +124,7 @@ func (s *Service) mintAccessJWT(userID primitive.ObjectID) (string, error) {
 	return tok.SignedString(s.priv)
 }
 
-func (s *Service) mintRefreshToken() (plain string, hash string, err error) {
+func (s *TokenService) mintRefreshToken() (plain string, hash string, err error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return "", "", err
@@ -135,12 +135,12 @@ func (s *Service) mintRefreshToken() (plain string, hash string, err error) {
 	return plain, hash, nil
 }
 
-func (s *Service) hashRefresh(refreshPlain string) string {
+func (s *TokenService) hashRefresh(refreshPlain string) string {
 	sum := sha256.Sum256([]byte(s.pepper + ":" + refreshPlain))
 	return hex.EncodeToString(sum[:])
 }
 
-func (s *Service) VerifyAccessJWT(jwtStr string) (primitive.ObjectID, error) {
+func (s *TokenService) VerifyAccessJWT(jwtStr string) (primitive.ObjectID, error) {
 	tok, err := jwt.Parse(jwtStr, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok || t.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 			return nil, ErrInvalidToken

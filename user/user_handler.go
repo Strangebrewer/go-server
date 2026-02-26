@@ -1,4 +1,4 @@
-package users
+package user
 
 import (
 	"encoding/json"
@@ -10,9 +10,9 @@ import (
 	"github.com/Strangebrewer/go-server/token"
 )
 
-type Handler struct {
+type UserHandler struct {
 	userStore    *UserStore
-	tokenService *token.Service
+	tokenService *token.TokenService
 }
 
 type loginReq struct {
@@ -20,11 +20,11 @@ type loginReq struct {
 	Password string `json:"password"`
 }
 
-func NewHandler(store *UserStore, tokenService *token.Service) *Handler {
-	return &Handler{userStore: store, tokenService: tokenService}
+func NewUserHandler(store *UserStore, tokenService *token.TokenService) *UserHandler {
+	return &UserHandler{userStore: store, tokenService: tokenService}
 }
 
-func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var req CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
@@ -57,7 +57,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(u.Public())
 }
 
-func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
@@ -92,7 +92,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(res)
 }
 
-func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 	uid, ok := token.UserIDFromContext(r.Context())
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)

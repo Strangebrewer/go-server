@@ -1,4 +1,4 @@
-package users
+package user
 
 import (
 	"context"
@@ -23,7 +23,7 @@ type UserStore struct {
 	collection *mongo.Collection
 }
 
-func NewStore(usersCollection *mongo.Collection) *UserStore {
+func NewUserStore(usersCollection *mongo.Collection) *UserStore {
 	return &UserStore{collection: usersCollection}
 }
 

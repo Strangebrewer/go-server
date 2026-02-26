@@ -2,7 +2,7 @@ package thing
 
 import "github.com/go-chi/chi/v5"
 
-func Routes(store *ThingStore) chi.Router {
+func ThingRoutes(store *ThingStore) chi.Router {
 	r := chi.NewRouter()
 	h := NewThingHandler(store)
 

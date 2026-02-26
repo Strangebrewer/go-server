@@ -7,19 +7,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Handler struct {
-	svc *Service
+type TokenHandler struct {
+	svc *TokenService
 }
 
-func NewHandler(svc *Service) *Handler {
-	return &Handler{svc: svc}
+func NewTokenHandler(svc *TokenService) *TokenHandler {
+	return &TokenHandler{svc: svc}
 }
 
 type issueReq struct {
 	UserID string `json:"userId"`
 }
 
-func (h *Handler) Issue(w http.ResponseWriter, r *http.Request) {
+func (h *TokenHandler) Issue(w http.ResponseWriter, r *http.Request) {
 	var req issueReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
@@ -42,7 +42,7 @@ func (h *Handler) Issue(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(res)
 }
 
-func (h *Handler) Exchange(w http.ResponseWriter, r *http.Request) {
+func (h *TokenHandler) Exchange(w http.ResponseWriter, r *http.Request) {
 	refresh, ok := bearerToken(r)
 	if !ok {
 		http.Error(w, "missing bearer token", http.StatusUnauthorized)
@@ -59,7 +59,7 @@ func (h *Handler) Exchange(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(res)
 }
 
-func (h *Handler) Revoke(w http.ResponseWriter, r *http.Request) {
+func (h *TokenHandler) Revoke(w http.ResponseWriter, r *http.Request) {
 	refresh, ok := bearerToken(r)
 	if !ok {
 		http.Error(w, "missing bearer token", http.StatusUnauthorized)

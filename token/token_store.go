@@ -14,7 +14,7 @@ type TokenStore struct {
 	collection *mongo.Collection
 }
 
-func NewStore(tokensCollection *mongo.Collection) *TokenStore {
+func NewTokenStore(tokensCollection *mongo.Collection) *TokenStore {
 	return &TokenStore{collection: tokensCollection}
 }
 

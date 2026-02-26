@@ -8,16 +8,16 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type Handler struct {
-	store *ThingStore
+type ThingHandler struct {
+	thingStore *ThingStore
 }
 
-func NewThingHandler(store *ThingStore) *Handler {
-	return &Handler{store: store}
+func NewThingHandler(store *ThingStore) *ThingHandler {
+	return &ThingHandler{thingStore: store}
 }
 
-func (h *Handler) GetAllThings(w http.ResponseWriter, r *http.Request) {
-	things, err := h.store.GetAll(r.Context())
+func (h *ThingHandler) GetAllThings(w http.ResponseWriter, r *http.Request) {
+	things, err := h.thingStore.GetAll(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -29,9 +29,9 @@ func (h *Handler) GetAllThings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) GetOneThing(w http.ResponseWriter, r *http.Request) {
+func (h *ThingHandler) GetOneThing(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	thing, err := h.store.GetOne(r.Context(), id)
+	thing, err := h.thingStore.GetOne(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -47,7 +47,7 @@ func (h *Handler) GetOneThing(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) CreateThing(w http.ResponseWriter, r *http.Request) {
+func (h *ThingHandler) CreateThing(w http.ResponseWriter, r *http.Request) {
 	var thing Thing
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -58,7 +58,7 @@ func (h *Handler) CreateThing(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	created, err := h.store.Create(r.Context(), &thing)
+	created, err := h.thingStore.Create(r.Context(), &thing)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -71,7 +71,7 @@ func (h *Handler) CreateThing(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) UpdateThing(w http.ResponseWriter, r *http.Request) {
+func (h *ThingHandler) UpdateThing(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	var thing Thing
@@ -84,7 +84,7 @@ func (h *Handler) UpdateThing(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	updated, err := h.store.Update(r.Context(), id, thing)
+	updated, err := h.thingStore.Update(r.Context(), id, thing)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -101,10 +101,10 @@ func (h *Handler) UpdateThing(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) DeleteThing(w http.ResponseWriter, r *http.Request) {
+func (h *ThingHandler) DeleteThing(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.store.Delete(r.Context(), id)
+	res, err := h.thingStore.Delete(r.Context(), id)
 	if err != nil {
 		log.Printf("DeleteThing: id=%s delete failed: %v", id, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

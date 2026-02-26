@@ -13,7 +13,7 @@ const userIDKey ctxKey = iota
 
 // RequireAccess validates the access JWT from `Authorization: Bearer <jwt>`
 // and injects the user id into request context.
-func RequireAccess(svc *Service) func(http.Handler) http.Handler {
+func RequireAccess(svc *TokenService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			jwtStr, ok := bearerToken(r)

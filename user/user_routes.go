@@ -1,14 +1,14 @@
-package users
+package user
 
 import (
 	"github.com/Strangebrewer/go-server/token"
 	"github.com/go-chi/chi/v5"
 )
 
-func Routes(userStore *UserStore, tokenService *token.Service) chi.Router {
+func UserRoutes(userStore *UserStore, tokenService *token.TokenService) chi.Router {
 	r := chi.NewRouter()
+	h := NewUserHandler(userStore, tokenService)
 
-	h := NewHandler(userStore, tokenService)
 	r.Post("/", h.CreateUser)
 	r.Post("/login", h.Login)
 
