@@ -8,7 +8,7 @@ import (
 	"github.com/Strangebrewer/go-server/database"
 	"github.com/Strangebrewer/go-server/server"
 	"github.com/Strangebrewer/go-server/thing"
-	"github.com/Strangebrewer/go-server/tokens"
+	"github.com/Strangebrewer/go-server/token"
 	"github.com/Strangebrewer/go-server/users"
 )
 
@@ -24,8 +24,8 @@ func main() {
 	db := mongoConnection.Client.Database(cfg.MongoDBName)
 
 	tokensCollection := db.Collection("tokens")
-	tokenStore := tokens.NewStore(tokensCollection)
-	tokenService, err := tokens.NewService(tokenStore, cfg.PrivateKeyPEM, cfg.PublicKeyPEM, cfg.RefreshTokenPepper)
+	tokenStore := token.NewStore(tokensCollection)
+	tokenService, err := token.NewService(tokenStore, cfg.PrivateKeyPEM, cfg.PublicKeyPEM, cfg.RefreshTokenPepper)
 	if err != nil {
 		log.Fatalf("token service init failed: %v", err)
 	}

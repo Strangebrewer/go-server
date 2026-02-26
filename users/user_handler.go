@@ -7,12 +7,12 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Strangebrewer/go-server/tokens"
+	"github.com/Strangebrewer/go-server/token"
 )
 
 type Handler struct {
 	userStore    *UserStore
-	tokenService *tokens.Service
+	tokenService *token.Service
 }
 
 type loginReq struct {
@@ -20,7 +20,7 @@ type loginReq struct {
 	Password string `json:"password"`
 }
 
-func NewHandler(store *UserStore, tokenService *tokens.Service) *Handler {
+func NewHandler(store *UserStore, tokenService *token.Service) *Handler {
 	return &Handler{userStore: store, tokenService: tokenService}
 }
 
@@ -93,7 +93,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
-	uid, ok := tokens.UserIDFromContext(r.Context())
+	uid, ok := token.UserIDFromContext(r.Context())
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
