@@ -38,6 +38,20 @@ func (s *UserStore) EnsureIndexes(ctx context.Context) error {
 	return nil
 }
 
+func (s *UserStore) FindByID(ctx context.Context, idHex string) (*User, error) {
+	oid, err := primitive.ObjectIDFromHex(idHex)
+	if err != nil {
+		return nil, err
+	}
+
+	var u User
+	err = s.collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&u)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
 func (s *UserStore) Create(ctx context.Context, email, password string) (User, error) {
 	now := time.Now().UTC()
 	email = normalizeEmail(email)

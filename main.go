@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/Strangebrewer/go-server/app"
-	"github.com/Strangebrewer/go-server/auth"
 	"github.com/Strangebrewer/go-server/config"
 	"github.com/Strangebrewer/go-server/database"
 	"github.com/Strangebrewer/go-server/server"
@@ -26,15 +25,11 @@ func main() {
 	thingCollection := db.Collection("thing")
 	thingStore := thing.NewStore(thingCollection)
 
-	sessionsCollection := db.Collection("sessions")
-	authStore := auth.NewAuthStore(sessionsCollection)
-
 	usersCollection := db.Collection("users")
 	usersStore := users.NewStore(usersCollection)
 
 	application := &app.Application{
 		ThingStore: thingStore,
-		AuthStore:  authStore,
 		UserStore:  usersStore,
 	}
 
