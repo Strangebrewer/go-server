@@ -7,17 +7,20 @@ import (
 )
 
 type Config struct {
-	MongoDBUsername string `json:"mongo_username"`
-	MongoDBPassword string `json:"mongo_password"`
-	MongoDBCluster  string `json:"mongo_cluster"`
-	MongoDBName     string `json:"mongo_db_name"`
-	Database        string `json:"database"`
-	DBUser          string `json:"db_user"`
-	DBPassword      string `json:"db_password"`
-	DBName          string `json:"db_name"`
-	DBHost          string `json:"db_host"`
-	DBPort          string `json:"db_port"`
-	loaded          bool
+	MongoDBUsername    string `json:"mongo_username"`
+	MongoDBPassword    string `json:"mongo_password"`
+	MongoDBCluster     string `json:"mongo_cluster"`
+	MongoDBName        string `json:"mongo_db_name"`
+	Database           string `json:"database"`
+	DBUser             string `json:"db_user"`
+	DBPassword         string `json:"db_password"`
+	DBName             string `json:"db_name"`
+	DBHost             string `json:"db_host"`
+	DBPort             string `json:"db_port"`
+	PrivateKeyPEM      string
+	PublicKeyPEM       string
+	RefreshTokenPepper string
+	loaded             bool
 }
 
 var Cfg Config
@@ -41,6 +44,14 @@ func GetCurrentCfg() Config {
 }
 
 func (cfg *Config) LoadEnvVariables() {
+	cfg.PrivateKeyPEM = os.Getenv("PRIVATE_KEY")
+	cfg.PublicKeyPEM = os.Getenv("PUBLIC_KEY")
+
+	refreshPepper := os.Getenv("REFRESH_TOKEN_PEPPER")
+	if refreshPepper != "" {
+		cfg.RefreshTokenPepper = refreshPepper
+	}
+
 	mongoDbUsername := os.Getenv("MONGO_USERNAME")
 	if mongoDbUsername != "" {
 		cfg.MongoDBUsername = mongoDbUsername

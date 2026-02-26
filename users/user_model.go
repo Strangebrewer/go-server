@@ -15,26 +15,19 @@ type User struct {
 	Disabled     bool               `bson:"disabled" json:"disabled"`
 }
 
+type PublicUser struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
+}
+
 type CreateUserRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-// Response shape for create endpoint (no password hash)
-type UserPublic struct {
-	ID        primitive.ObjectID `json:"id"`
-	Email     string             `json:"email"`
-	CreatedAt time.Time          `json:"createdAt"`
-	UpdatedAt time.Time          `json:"updatedAt"`
-	Disabled  bool               `json:"disabled"`
-}
-
-func (u User) Public() UserPublic {
-	return UserPublic{
-		ID:        u.ID,
-		Email:     u.Email,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
-		Disabled:  u.Disabled,
+func (u *User) Public() PublicUser {
+	return PublicUser{
+		ID:    u.ID.Hex(),
+		Email: u.Email,
 	}
 }
