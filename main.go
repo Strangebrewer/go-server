@@ -23,15 +23,15 @@ func main() {
 
 	db := mongoConnection.Client.Database(cfg.MongoDBName)
 
-	thingCollection := db.Collection("thing")
-	thingStore := thing.NewStore(thingCollection)
-
 	tokensCollection := db.Collection("tokens")
 	tokenStore := tokens.NewStore(tokensCollection)
 	tokenService, err := tokens.NewService(tokenStore, cfg.PrivateKeyPEM, cfg.PublicKeyPEM, cfg.RefreshTokenPepper)
 	if err != nil {
 		log.Fatalf("token service init failed: %v", err)
 	}
+
+	thingCollection := db.Collection("thing")
+	thingStore := thing.NewStore(thingCollection)
 
 	usersCollection := db.Collection("users")
 	usersStore := users.NewStore(usersCollection)
