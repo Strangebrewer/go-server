@@ -6,6 +6,8 @@ import (
 	"github.com/Strangebrewer/go-server/app"
 	"github.com/Strangebrewer/go-server/config"
 	"github.com/Strangebrewer/go-server/database"
+	"github.com/Strangebrewer/go-server/job"
+	"github.com/Strangebrewer/go-server/recruiter"
 	"github.com/Strangebrewer/go-server/server"
 	"github.com/Strangebrewer/go-server/thing"
 	"github.com/Strangebrewer/go-server/token"
@@ -30,6 +32,12 @@ func main() {
 		log.Fatalf("token service init failed: %v", err)
 	}
 
+	jobCollection := db.Collection("jobs")
+	jobStore := job.NewJobStore(jobCollection)
+
+	recruiterCollection := db.Collection("recruiters")
+	recruiterStore := recruiter.NewRecruiterStore(recruiterCollection)
+
 	thingCollection := db.Collection("thing")
 	thingStore := thing.NewThingStore(thingCollection)
 
@@ -37,10 +45,12 @@ func main() {
 	usersStore := user.NewUserStore(usersCollection)
 
 	application := &app.Application{
-		ThingStore:   thingStore,
-		TokenStore:   tokenStore,
-		TokenService: tokenService,
-		UserStore:    usersStore,
+		RecruiterStore: recruiterStore,
+		JobStore:       jobStore,
+		ThingStore:     thingStore,
+		TokenStore:     tokenStore,
+		TokenService:   tokenService,
+		UserStore:      usersStore,
 	}
 
 	s := server.New("localhost:8080", application)
