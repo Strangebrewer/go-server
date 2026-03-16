@@ -88,8 +88,17 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response := &LoginResponse{
+		User: PublicUser{
+			Email: u.Email,
+			ID:    u.ID.Hex(),
+		},
+		AccessToken:  res.AccessToken,
+		RefreshToken: res.RefreshToken,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {

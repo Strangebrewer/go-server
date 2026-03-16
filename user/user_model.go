@@ -25,6 +25,12 @@ type CreateUserRequest struct {
 	Password string `json:"password"`
 }
 
+type LoginResponse struct {
+	User         PublicUser `json:"user"`
+	AccessToken  string     `json:"accessToken"`
+	RefreshToken string     `json:"refreshToken"`
+}
+
 func (u *User) Public() PublicUser {
 	return PublicUser{
 		ID:    u.ID.Hex(),
