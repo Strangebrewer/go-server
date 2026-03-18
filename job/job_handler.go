@@ -5,16 +5,19 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/Strangebrewer/go-server/recruiter"
 	"github.com/Strangebrewer/go-server/token"
 	"github.com/go-chi/chi/v5"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type JobHandler struct {
-	jobStore *JobStore
+	jobStore       *JobStore
+	recruiterStore *recruiter.RecruiterStore
 }
 
-func NewJobHandler(store *JobStore) *JobHandler {
-	return &JobHandler{jobStore: store}
+func NewJobHandler(store *JobStore, recruiterStore *recruiter.RecruiterStore) *JobHandler {
+	return &JobHandler{jobStore: store, recruiterStore: recruiterStore}
 }
 
 func (h *JobHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
@@ -49,18 +52,32 @@ func (h *JobHandler) GetOneJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *JobHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
-	var job Job
+	var reqBody CreateJobRequestDTO
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
-	err := decoder.Decode(&job)
+	err := decoder.Decode(&reqBody)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
+	var recruiterId primitive.ObjectID
+	recruiterId, err = primitive.ObjectIDFromHex(reqBody.Recruiter)
+	if err != nil {
+		recruiter, err := h.recruiterStore.FindByName(r.Context(), "No Recruiter")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		recruiterId = recruiter.ID
+	}
+	log.Printf("reqBody:: %v", reqBody)
+
 	userId, _ := token.UserIDFromContext(r.Context())
-	job.User = userId
+	job, err := reqBody.ToJob(recruiterId, userId)
+
+	log.Printf("job:: %v", job)
 
 	created, err := h.jobStore.Create(r.Context(), &job)
 	if err != nil {

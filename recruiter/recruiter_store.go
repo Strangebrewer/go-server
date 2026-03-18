@@ -105,3 +105,15 @@ func (s *RecruiterStore) Delete(ctx context.Context, id string) (*mongo.DeleteRe
 
 	return result, nil
 }
+
+func (s *RecruiterStore) FindByName(ctx context.Context, name string) (*Recruiter, error) {
+	var recruiter Recruiter
+	err := s.collection.FindOne(ctx, bson.M{"name": name}).Decode(&recruiter)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("no recruiter found by name: " + name)
+		}
+		return nil, err
+	}
+	return &recruiter, nil
+}
