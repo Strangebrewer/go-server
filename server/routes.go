@@ -17,8 +17,7 @@ func registerRoutes(r chi.Router, application *app.Application) {
 	_ = application.TokenStore.EnsureIndexes(context.Background())
 	_ = application.UserStore.EnsureIndexes(context.Background())
 
-	r.With(token.RequireAccess(application.TokenService)).
-		Mount("/things", thing.ThingRoutes(application.ThingStore))
+	r.Mount("/things", thing.ThingRoutes(application.ThingStore, application.TokenService))
 	r.With(token.RequireAccess(application.TokenService)).
 		Mount("/jobs", job.JobRoutes(application.JobStore, application.RecruiterStore))
 	r.With(token.RequireAccess(application.TokenService)).
