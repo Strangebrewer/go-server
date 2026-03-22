@@ -23,7 +23,7 @@ type Job struct {
 	User           primitive.ObjectID `json:"user" bson:"user"`
 }
 
-type CreateJobRequestDTO struct {
+type CreateJobRequest struct {
 	JobTitle       string `json:"jobTitle"`
 	WorkFrom       string `json:"workFrom"`
 	Recruiter      string `json:"recruiter"`
@@ -36,7 +36,7 @@ type CreateJobRequestDTO struct {
 	PocTitle       string `json:"pocTitle"`
 }
 
-func (rBody CreateJobRequestDTO) ToJob(recruiterId primitive.ObjectID, userId primitive.ObjectID) (Job, error) {
+func (rBody CreateJobRequest) ToJob(recruiterId primitive.ObjectID, userId primitive.ObjectID) (Job, error) {
 	return Job{
 		JobTitle:       rBody.JobTitle,
 		WorkFrom:       rBody.WorkFrom,

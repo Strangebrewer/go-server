@@ -2,11 +2,10 @@ package job
 
 import (
 	"github.com/Strangebrewer/go-server/recruiter"
-	"github.com/Strangebrewer/go-server/token"
 	"github.com/go-chi/chi/v5"
 )
 
-func JobRoutes(jobStore *JobStore, recruiterStore *recruiter.RecruiterStore, tokenService *token.TokenService) chi.Router {
+func JobRoutes(jobStore *JobStore, recruiterStore *recruiter.RecruiterStore) chi.Router {
 	r := chi.NewRouter()
 	h := NewJobHandler(jobStore, recruiterStore)
 

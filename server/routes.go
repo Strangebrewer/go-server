@@ -20,7 +20,7 @@ func registerRoutes(r chi.Router, application *app.Application) {
 	r.With(token.RequireAccess(application.TokenService)).
 		Mount("/things", thing.ThingRoutes(application.ThingStore))
 	r.With(token.RequireAccess(application.TokenService)).
-		Mount("/jobs", job.JobRoutes(application.JobStore, application.RecruiterStore, application.TokenService))
+		Mount("/jobs", job.JobRoutes(application.JobStore, application.RecruiterStore))
 	r.With(token.RequireAccess(application.TokenService)).
 		Mount("/recruiters", recruiter.RecruiterRoutes(application.RecruiterStore))
 	r.Mount("/token", token.TokenRoutes(application.TokenService))

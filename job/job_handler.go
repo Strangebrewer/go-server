@@ -52,7 +52,7 @@ func (h *JobHandler) GetOneJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *JobHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
-	var reqBody CreateJobRequestDTO
+	var reqBody CreateJobRequest
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(&reqBody)
@@ -72,12 +72,9 @@ func (h *JobHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
 		}
 		recruiterId = recruiter.ID
 	}
-	log.Printf("reqBody:: %v", reqBody)
 
 	userId, _ := token.UserIDFromContext(r.Context())
 	job, err := reqBody.ToJob(recruiterId, userId)
-
-	log.Printf("job:: %v", job)
 
 	created, err := h.jobStore.Create(r.Context(), &job)
 	if err != nil {

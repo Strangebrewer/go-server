@@ -51,7 +51,7 @@ func (s *ThingStore) GetOne(ctx context.Context, id string) (*Thing, error) {
 	return &thing, nil
 }
 
-func (s *ThingStore) Create(ctx context.Context, thing *Thing) (*mongo.InsertOneResult, error) {
+func (s *ThingStore) Create(ctx context.Context, thing *Thing) (*Thing, error) {
 	result, err := s.collection.InsertOne(ctx, thing)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (s *ThingStore) Create(ctx context.Context, thing *Thing) (*mongo.InsertOne
 		thing.ID = oid
 	}
 
-	return result, nil
+	return thing, nil
 }
 
 func (s *ThingStore) Update(ctx context.Context, id string, thing Thing) (*Thing, error) {
