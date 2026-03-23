@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type ThingHandler struct {
@@ -74,17 +75,15 @@ func (h *ThingHandler) CreateThing(w http.ResponseWriter, r *http.Request) {
 func (h *ThingHandler) UpdateThing(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	var thing Thing
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	err := decoder.Decode(&thing)
-	if err != nil {
+	var fields bson.M
+	if err := json.NewDecoder(r.Body).Decode(&fields); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
+	delete(fields, "id")
 
-	updated, err := h.thingStore.Update(r.Context(), id, thing)
+	updated, err := h.thingStore.Update(r.Context(), id, fields)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

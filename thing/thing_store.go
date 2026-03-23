@@ -64,14 +64,14 @@ func (s *ThingStore) Create(ctx context.Context, thing *Thing) (*Thing, error) {
 	return thing, nil
 }
 
-func (s *ThingStore) Update(ctx context.Context, id string, thing Thing) (*Thing, error) {
+func (s *ThingStore) Update(ctx context.Context, id string, fields bson.M) (*Thing, error) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
 
 	filter := bson.M{"_id": objectId}
-	update := bson.M{"$set": thing}
+	update := bson.M{"$set": fields}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 
 	var updated Thing

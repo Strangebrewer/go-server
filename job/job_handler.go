@@ -8,6 +8,7 @@ import (
 	"github.com/Strangebrewer/go-server/recruiter"
 	"github.com/Strangebrewer/go-server/token"
 	"github.com/go-chi/chi/v5"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -21,9 +22,22 @@ func NewJobHandler(store *JobStore, recruiterStore *recruiter.RecruiterStore) *J
 }
 
 func (h *JobHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
-	jobs, err := h.jobStore.GetAll(r.Context())
+	userID, _ := token.UserIDFromContext(r.Context())
+
+	filter := JobFilter{
+		Company:         r.URL.Query().Get("company"),
+		Recruiter:       r.URL.Query().Get("recruiter"),
+		Status:          r.URL.Query().Get("status"),
+		WorkFrom:        r.URL.Query().Get("workFrom"),
+		DateMin:         r.URL.Query().Get("dateMin"),
+		DateMax:         r.URL.Query().Get("dateMax"),
+		IncludeArchived: r.URL.Query().Get("archived") == "true",
+	}
+
+	jobs, err := h.jobStore.Find(r.Context(), userID, filter)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("GetAllJobs: search failed: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -35,7 +49,7 @@ func (h *JobHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
 
 func (h *JobHandler) GetOneJob(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	job, err := h.jobStore.GetOne(r.Context(), id)
+	job, err := h.jobStore.FindOne(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -92,17 +106,15 @@ func (h *JobHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
 func (h *JobHandler) UpdateJob(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	var job Job
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	err := decoder.Decode(&job)
-	if err != nil {
+	var fields bson.M
+	if err := json.NewDecoder(r.Body).Decode(&fields); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
+	delete(fields, "id")
 
-	updated, err := h.jobStore.Update(r.Context(), id, job)
+	updated, err := h.jobStore.Update(r.Context(), id, fields)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

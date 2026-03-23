@@ -36,6 +36,16 @@ type CreateJobRequest struct {
 	PocTitle       string `json:"pocTitle"`
 }
 
+type JobFilter struct {
+	Company         string
+	Recruiter       string
+	Status          string
+	WorkFrom        string
+	DateMin         string
+	DateMax         string
+	IncludeArchived bool
+}
+
 func (rBody CreateJobRequest) ToJob(recruiterId primitive.ObjectID, userId primitive.ObjectID) (Job, error) {
 	return Job{
 		JobTitle:       rBody.JobTitle,

@@ -64,14 +64,14 @@ func (s *RecruiterStore) Create(ctx context.Context, recruiter *Recruiter) (*Rec
 	return recruiter, nil
 }
 
-func (s *RecruiterStore) Update(ctx context.Context, id string, recruiter Recruiter) (*Recruiter, error) {
+func (s *RecruiterStore) Update(ctx context.Context, id string, fields bson.M) (*Recruiter, error) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
 
 	filter := bson.M{"_id": objectId}
-	update := bson.M{"$set": recruiter}
+	update := bson.M{"$set": fields}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 
 	var updated Recruiter

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Strangebrewer/go-server/token"
 	"github.com/go-chi/chi/v5"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type RecruiterHandler struct {
@@ -81,17 +82,15 @@ func (h *RecruiterHandler) CreateRecruiter(w http.ResponseWriter, r *http.Reques
 func (h *RecruiterHandler) UpdateRecruiter(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	var recruiter Recruiter
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	err := decoder.Decode(&recruiter)
-	if err != nil {
+	var fields bson.M
+	if err := json.NewDecoder(r.Body).Decode(&fields); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
+	delete(fields, "id")
 
-	updated, err := h.recruiterStore.Update(r.Context(), id, recruiter)
+	updated, err := h.recruiterStore.Update(r.Context(), id, fields)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
