@@ -32,6 +32,9 @@ func (h *JobHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
 		DateMin:         r.URL.Query().Get("dateMin"),
 		DateMax:         r.URL.Query().Get("dateMax"),
 		IncludeArchived: r.URL.Query().Get("archived") == "true",
+		IncludeDeclined: r.URL.Query().Get("includeDeclined") == "true",
+		SortBy:          r.URL.Query().Get("sortBy"),
+		SortDir:         r.URL.Query().Get("sortDir"),
 	}
 
 	jobs, err := h.jobStore.Find(r.Context(), userID, filter)
@@ -106,13 +109,41 @@ func (h *JobHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
 func (h *JobHandler) UpdateJob(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	var fields bson.M
-	if err := json.NewDecoder(r.Body).Decode(&fields); err != nil {
+	var req UpdateJobRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
-	delete(fields, "id")
+
+	fields := bson.M{
+		"job_title":        req.JobTitle,
+		"work_from":        req.WorkFrom,
+		"date_applied":     req.DateApplied,
+		"company_name":     req.CompanyName,
+		"company_address":  req.CompanyAddress,
+		"company_city":     req.CompanyCity,
+		"company_state":    req.CompanyState,
+		"point_of_contact": req.PointOfContact,
+		"poc_title":        req.PocTitle,
+		"interviews":          req.Interviews,
+		"comments":            req.Comments,
+		"status":              req.Status,
+		"archived":            req.Archived,
+		"primary_link":        req.PrimaryLink,
+		"primary_link_text":   req.PrimaryLinkText,
+		"secondary_link":      req.SecondaryLink,
+		"secondary_link_text": req.SecondaryLinkText,
+	}
+
+	if req.Recruiter != "" {
+		recruiterID, err := primitive.ObjectIDFromHex(req.Recruiter)
+		if err != nil {
+			http.Error(w, "invalid recruiter id", http.StatusBadRequest)
+			return
+		}
+		fields["recruiter"] = recruiterID
+	}
 
 	updated, err := h.jobStore.Update(r.Context(), id, fields)
 	if err != nil {

@@ -19,11 +19,24 @@ func NewJobStore(collection *mongo.Collection) *JobStore {
 	return &JobStore{collection: collection}
 }
 
+var sortFieldMap = map[string]string{
+	"jobTitle":    "job_title",
+	"companyName": "company_name",
+	"dateApplied": "date_applied",
+	"recruiter":   "recruiter",
+	"workFrom":    "work_from",
+	"status":      "status",
+}
+
 func (s *JobStore) Find(ctx context.Context, userID primitive.ObjectID, f JobFilter) ([]Job, error) {
 	filter := bson.D{{Key: "user", Value: userID}}
 
 	if !f.IncludeArchived {
 		filter = append(filter, bson.E{Key: "archived", Value: false})
+	}
+
+	if !f.IncludeDeclined {
+		filter = append(filter, bson.E{Key: "status", Value: bson.M{"$ne": "declined"}})
 	}
 
 	if f.Company != "" {
@@ -54,10 +67,19 @@ func (s *JobStore) Find(ctx context.Context, userID primitive.ObjectID, f JobFil
 		if f.DateMax != "" {
 			dateFilter = append(dateFilter, bson.E{Key: "$lte", Value: f.DateMax})
 		}
-		filter = append(filter, bson.E{Key: "dateApplied", Value: dateFilter})
+		filter = append(filter, bson.E{Key: "date_applied", Value: dateFilter})
 	}
 
-	cursor, err := s.collection.Find(ctx, filter)
+	var findOpts *options.FindOptions
+	if dbField, ok := sortFieldMap[f.SortBy]; ok {
+		dir := 1
+		if f.SortDir == "desc" {
+			dir = -1
+		}
+		findOpts = options.Find().SetSort(bson.D{{Key: dbField, Value: dir}})
+	}
+
+	cursor, err := s.collection.Find(ctx, filter, findOpts)
 	if err != nil {
 		return nil, err
 	}
