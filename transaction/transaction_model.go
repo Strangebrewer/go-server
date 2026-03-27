@@ -10,7 +10,7 @@ type Transaction struct {
 	CategoryID    *primitive.ObjectID `json:"category_id,omitempty" bson:"category_id,omitempty"`
 	Date          string              `json:"date" bson:"date"`
 	Description   string              `json:"description,omitempty" bson:"description,omitempty"`
-	DestinationID *primitive.ObjectID `json:"destination_id,omitempty" bson:"destination_id, omitempty"`
+	DestinationID *primitive.ObjectID `json:"destination_id,omitempty" bson:"destination_id,omitempty"`
 	Income        bool                `json:"income" bson:"income"` // default to false
 	Owner         string              `json:"owner" bson:"owner"`   // 'mine' and 'hers', default to 'mine'
 	Shared        bool                `json:"shared" bson:"shared"` // default to false

@@ -19,6 +19,8 @@ type Bill struct {
 }
 
 type CreateBillRequest struct {
+	// even though CategoryID is an ObjectID, it will come in from the frontend as a string
+	//   it gets converted to an ObjectID in the handler
 	CategoryID  string             `json:"category_id,omitempty"`
 	Description string             `json:"description"`
 	DueDay      int                `json:"due_day"`
@@ -39,8 +41,6 @@ type UpdateBillRequest struct {
 	Status      string             `json:"status"`
 }
 
-// PayBillRequest allows overriding bill defaults when marking a bill paid.
-// All fields are optional; omitted fields fall back to the bill's stored values.
 type PayBillRequest struct {
 	Amount      int    `json:"amount"`
 	BillMonth   string `json:"bill_month"`
