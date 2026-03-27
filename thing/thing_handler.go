@@ -2,11 +2,13 @@ package thing
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ThingHandler struct {
@@ -34,11 +36,12 @@ func (h *ThingHandler) GetOneThing(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	thing, err := h.thingStore.GetOne(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if thing == nil {
-		http.NotFound(w, r)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("GetOneThing: id=%s %v", id, err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 

@@ -3,14 +3,19 @@ package main
 import (
 	"log"
 
+	"github.com/Strangebrewer/go-server/account"
 	"github.com/Strangebrewer/go-server/app"
+	"github.com/Strangebrewer/go-server/bill"
+	"github.com/Strangebrewer/go-server/category"
 	"github.com/Strangebrewer/go-server/config"
 	"github.com/Strangebrewer/go-server/database"
 	"github.com/Strangebrewer/go-server/job"
 	"github.com/Strangebrewer/go-server/recruiter"
 	"github.com/Strangebrewer/go-server/server"
+	tmpl "github.com/Strangebrewer/go-server/template"
 	"github.com/Strangebrewer/go-server/thing"
 	"github.com/Strangebrewer/go-server/token"
+	"github.com/Strangebrewer/go-server/transaction"
 	"github.com/Strangebrewer/go-server/user"
 )
 
@@ -44,13 +49,33 @@ func main() {
 	usersCollection := db.Collection("users")
 	usersStore := user.NewUserStore(usersCollection)
 
+	accountCollection := db.Collection("accounts")
+	accountStore := account.NewAccountStore(accountCollection)
+
+	categoryCollection := db.Collection("categories")
+	categoryStore := category.NewCategoryStore(categoryCollection)
+
+	transactionCollection := db.Collection("transactions")
+	transactionStore := transaction.NewTransactionStore(transactionCollection)
+
+	billCollection := db.Collection("bills")
+	billStore := bill.NewBillStore(billCollection)
+
+	templateCollection := db.Collection("templates")
+	templateStore := tmpl.NewTemplateStore(templateCollection)
+
 	application := &app.Application{
-		RecruiterStore: recruiterStore,
-		JobStore:       jobStore,
-		ThingStore:     thingStore,
-		TokenStore:     tokenStore,
-		TokenService:   tokenService,
-		UserStore:      usersStore,
+		RecruiterStore:   recruiterStore,
+		JobStore:         jobStore,
+		ThingStore:       thingStore,
+		TokenStore:       tokenStore,
+		TokenService:     tokenService,
+		UserStore:        usersStore,
+		AccountStore:     accountStore,
+		CategoryStore:    categoryStore,
+		BillStore:        billStore,
+		TemplateStore:    templateStore,
+		TransactionStore: transactionStore,
 	}
 
 	s := server.New("localhost:8080", application)

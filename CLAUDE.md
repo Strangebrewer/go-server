@@ -91,7 +91,15 @@ Errors are returned from stores and checked in handlers. Use `fmt.Errorf("contex
 
 ## Known Inconsistencies (track these)
 
-None currently.
+- `dashboard/` is stubbed out (empty package files) pending a rewrite — don't touch it.
+
+## Budgeting Domain Conventions
+
+- **Monetary amounts** are stored as integers (cents) throughout — `Account.Balance`, `Transaction.Amount`, etc. Frontend handles display formatting. Never use `float64` for money.
+- **`Income`** is a bool on `Transaction`, not a category. This is intentional — income has its own dedicated UI section and shouldn't be mixed into expense category lists.
+- **`Owner`** is a string (`"mine"` or `"hers"`) on `Account`, `Bill`, and `Transaction`. It replaced the old `Member` entity, which was deleted.
+- **`BillMonth`** format is `"2006-01"` (YYYY-MM). It is validated server-side in `PayBill`. Frontend is responsible for passing the correct format.
+- **`member/`** package was deleted — do not recreate it.
 
 ## What NOT to Do
 

@@ -2,6 +2,7 @@ package recruiter
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/Strangebrewer/go-server/token"
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type RecruiterHandler struct {
@@ -36,11 +38,12 @@ func (h *RecruiterHandler) GetOneRecruiter(w http.ResponseWriter, r *http.Reques
 	id := chi.URLParam(r, "id")
 	recruiter, err := h.recruiterStore.GetOne(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if recruiter == nil {
-		http.NotFound(w, r)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("GetOneRecruiter: id=%s %v", id, err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
