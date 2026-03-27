@@ -8,6 +8,7 @@ import (
 	"github.com/Strangebrewer/go-server/token"
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type TemplateHandler struct {
@@ -44,16 +45,38 @@ func (h *TemplateHandler) CreateTemplate(w http.ResponseWriter, r *http.Request)
 	}
 	defer r.Body.Close()
 
+	categoryId, err := primitive.ObjectIDFromHex(req.CategoryID)
+	if err != nil {
+		http.Error(w, "invalid category_id", http.StatusBadRequest)
+		return
+	}
+
 	t := &Template{
-		UserID:        userID,
-		CategoryID:    req.CategoryID,
-		Name:          req.Name,
-		Description:   req.Description,
-		Owner:         req.Owner,
-		Type:          req.Type,
-		Shared:        req.Shared,
-		SourceID:      req.SourceID,
-		DestinationID: req.DestinationID,
+		UserID:      userID,
+		CategoryID:  categoryId,
+		Name:        req.Name,
+		Description: req.Description,
+		Owner:       req.Owner,
+		Type:        req.Type,
+		Shared:      req.Shared,
+	}
+
+	if req.SourceID != "" {
+		sourceId, err := primitive.ObjectIDFromHex(req.SourceID)
+		if err != nil {
+			http.Error(w, "invalid source_id", http.StatusBadRequest)
+			return
+		}
+		t.SourceID = &sourceId
+	}
+
+	if req.DestinationID != "" {
+		destId, err := primitive.ObjectIDFromHex(req.DestinationID)
+		if err != nil {
+			http.Error(w, "invalid destination_id", http.StatusBadRequest)
+			return
+		}
+		t.DestinationID = &destId
 	}
 
 	created, err := h.templateStore.Create(r.Context(), t)

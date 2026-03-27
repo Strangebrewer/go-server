@@ -3,6 +3,7 @@ package transaction
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -59,7 +60,7 @@ func (s *TransactionStore) GetOne(ctx context.Context, id string) (*Transaction,
 	err = s.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&txn)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("GetOne: transaction not found for id: " + id)
+			return nil, fmt.Errorf("GetOne: transaction not found for id %s: %w", id, mongo.ErrNoDocuments)
 		}
 		return nil, err
 	}

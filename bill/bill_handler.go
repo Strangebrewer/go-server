@@ -2,6 +2,7 @@ package bill
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type BillHandler struct {
@@ -25,6 +27,13 @@ func NewBillHandler(billStore *BillStore, transactionStore *transaction.Transact
 func (h *BillHandler) GetAllBills(w http.ResponseWriter, r *http.Request) {
 	userID, _ := token.UserIDFromContext(r.Context())
 
+	month := r.URL.Query().Get("month")
+	if _, err := time.Parse("2006-01", month); err != nil {
+		http.Error(w, "invalid bill_month format, expected YYYY-MM", http.StatusBadRequest)
+		return
+	}
+	// need to use the month and year to search for transactions for that month
+	//   and the previous two months (so I can display all three together)
 	bills, err := h.billStore.GetAll(r.Context(), userID)
 	if err != nil {
 		log.Printf("GetAllBills: %v", err)
@@ -32,8 +41,27 @@ func (h *BillHandler) GetAllBills(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	billsInterface := make([]BillResponse, len(bills))
+	transactions, err := h.transactionStore.GetAll(r.Context(), userID, transaction.TransactionFilter{Month: month})
+	if err != nil {
+		log.Printf("GetAllTransactions: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	for i, b := range bills {
+		billsInterface[i].Bill = b
+		var billTxns []transaction.Transaction
+		for _, t := range transactions {
+			if t.BillID != nil && *t.BillID == b.ID {
+				billTxns = append(billTxns, t)
+			}
+		}
+		billsInterface[i].Transactions = billTxns
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(bills); err != nil {
+	if err := json.NewEncoder(w).Encode(billsInterface); err != nil {
 		log.Printf("GetAllBills: encode failed: %v", err)
 	}
 }
@@ -48,6 +76,12 @@ func (h *BillHandler) CreateBill(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	sourceId, err := primitive.ObjectIDFromHex(req.SourceID)
+	if err != nil {
+		http.Error(w, "invalid source_id", http.StatusBadRequest)
+		return
+	}
+
 	bill := &Bill{
 		UserID:      userID,
 		Description: req.Description,
@@ -55,7 +89,7 @@ func (h *BillHandler) CreateBill(w http.ResponseWriter, r *http.Request) {
 		Name:        req.Name,
 		Owner:       req.Owner,
 		Shared:      req.Shared,
-		SourceID:    req.SourceID,
+		SourceID:    sourceId,
 		Status:      "active",
 	}
 
@@ -143,8 +177,12 @@ func (h *BillHandler) PayBill(w http.ResponseWriter, r *http.Request) {
 
 	bill, err := h.billStore.GetOne(r.Context(), id)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
 		log.Printf("PayBill: GetOne id=%s %v", id, err)
-		http.Error(w, "bill not found", http.StatusNotFound)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 

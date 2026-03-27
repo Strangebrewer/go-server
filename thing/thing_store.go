@@ -3,6 +3,7 @@ package thing
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -43,7 +44,7 @@ func (s *ThingStore) GetOne(ctx context.Context, id string) (*Thing, error) {
 	err = s.collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&thing)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("FindOne: thing not found for id: " + id)
+			return nil, fmt.Errorf("FindOne: thing not found for id %s: %w", id, mongo.ErrNoDocuments)
 		}
 		return nil, err
 	}

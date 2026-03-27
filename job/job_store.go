@@ -103,7 +103,7 @@ func (s *JobStore) FindOne(ctx context.Context, id string) (*Job, error) {
 	err = s.collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&job)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("FindOne: job not found for id: " + id)
+			return nil, fmt.Errorf("FindOne: job not found for id %s: %w", id, mongo.ErrNoDocuments)
 		}
 		return nil, err
 	}

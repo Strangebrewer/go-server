@@ -3,6 +3,7 @@ package recruiter
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -43,7 +44,7 @@ func (s *RecruiterStore) GetOne(ctx context.Context, id string) (*Recruiter, err
 	err = s.collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&recruiter)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("FindOne: recruiter not found for id: " + id)
+			return nil, fmt.Errorf("FindOne: recruiter not found for id %s: %w", id, mongo.ErrNoDocuments)
 		}
 		return nil, err
 	}

@@ -3,6 +3,7 @@ package bill
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -19,7 +20,7 @@ func NewBillStore(collection *mongo.Collection) *BillStore {
 }
 
 func (s *BillStore) GetAll(ctx context.Context, userID primitive.ObjectID) ([]Bill, error) {
-	cursor, err := s.collection.Find(ctx, bson.M{"user_id": userID})
+	cursor, err := s.collection.Find(ctx, bson.M{"user_id": userID, "status": "active"})
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ func (s *BillStore) GetOne(ctx context.Context, id string) (*Bill, error) {
 	err = s.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&bill)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("GetOne: bill not found for id: " + id)
+			return nil, fmt.Errorf("GetOne: bill not found for id %s: %w", id, mongo.ErrNoDocuments)
 		}
 		return nil, err
 	}

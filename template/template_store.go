@@ -3,6 +3,7 @@ package template
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -43,7 +44,7 @@ func (s *TemplateStore) GetOne(ctx context.Context, id string) (*Template, error
 	err = s.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&t)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("GetOne: template not found for id: " + id)
+			return nil, fmt.Errorf("GetOne: template not found for id %s: %w", id, mongo.ErrNoDocuments)
 		}
 		return nil, err
 	}

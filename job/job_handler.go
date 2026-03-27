@@ -2,6 +2,7 @@ package job
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type JobHandler struct {
@@ -54,11 +56,12 @@ func (h *JobHandler) GetOneJob(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	job, err := h.jobStore.FindOne(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if job == nil {
-		http.NotFound(w, r)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("GetOneJob: id=%s %v", id, err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -117,15 +120,15 @@ func (h *JobHandler) UpdateJob(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	fields := bson.M{
-		"job_title":        req.JobTitle,
-		"work_from":        req.WorkFrom,
-		"date_applied":     req.DateApplied,
-		"company_name":     req.CompanyName,
-		"company_address":  req.CompanyAddress,
-		"company_city":     req.CompanyCity,
-		"company_state":    req.CompanyState,
-		"point_of_contact": req.PointOfContact,
-		"poc_title":        req.PocTitle,
+		"job_title":           req.JobTitle,
+		"work_from":           req.WorkFrom,
+		"date_applied":        req.DateApplied,
+		"company_name":        req.CompanyName,
+		"company_address":     req.CompanyAddress,
+		"company_city":        req.CompanyCity,
+		"company_state":       req.CompanyState,
+		"point_of_contact":    req.PointOfContact,
+		"poc_title":           req.PocTitle,
 		"interviews":          req.Interviews,
 		"comments":            req.Comments,
 		"status":              req.Status,

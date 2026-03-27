@@ -2,12 +2,15 @@ package transaction
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/Strangebrewer/go-server/token"
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type TransactionHandler struct {
@@ -45,6 +48,10 @@ func (h *TransactionHandler) GetOneTransaction(w http.ResponseWriter, r *http.Re
 
 	txn, err := h.transactionStore.GetOne(r.Context(), id)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
 		log.Printf("GetOneTransaction: id=%s %v", id, err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
@@ -67,18 +74,50 @@ func (h *TransactionHandler) CreateTransaction(w http.ResponseWriter, r *http.Re
 	defer r.Body.Close()
 
 	txn := &Transaction{
-		UserID:        userID,
-		Amount:        req.Amount,
-		BillID:        req.BillID,
-		CategoryID:    req.CategoryID,
-		Date:          req.Date,
-		Description:   req.Description,
-		DestinationID: req.DestinationID,
-		Income:        req.Income,
-		Owner:         req.Owner,
-		Shared:        req.Shared,
-		SourceID:      req.SourceID,
-		Type:          req.Type,
+		UserID:      userID,
+		Amount:      req.Amount,
+		Date:        req.Date,
+		Description: req.Description,
+		Income:      req.Income,
+		Owner:       req.Owner,
+		Shared:      req.Shared,
+		Type:        req.Type,
+	}
+
+	if req.BillID != "" {
+		billId, err := primitive.ObjectIDFromHex(req.BillID)
+		if err != nil {
+			http.Error(w, "invalid bill_id", http.StatusBadRequest)
+			return
+		}
+		txn.BillID = &billId
+	}
+
+	if req.CategoryID != "" {
+		categoryId, err := primitive.ObjectIDFromHex(req.CategoryID)
+		if err != nil {
+			http.Error(w, "invalid category_id", http.StatusBadRequest)
+			return
+		}
+		txn.CategoryID = &categoryId
+	}
+
+	if req.DestinationID != "" {
+		destinationId, err := primitive.ObjectIDFromHex(req.DestinationID)
+		if err != nil {
+			http.Error(w, "invalid destination_id", http.StatusBadRequest)
+			return
+		}
+		txn.DestinationID = &destinationId
+	}
+
+	if req.SourceID != "" {
+		sourceId, err := primitive.ObjectIDFromHex(req.SourceID)
+		if err != nil {
+			http.Error(w, "invalid source_id", http.StatusBadRequest)
+			return
+		}
+		txn.SourceID = &sourceId
 	}
 
 	created, err := h.transactionStore.Create(r.Context(), txn)
@@ -106,17 +145,49 @@ func (h *TransactionHandler) UpdateTransaction(w http.ResponseWriter, r *http.Re
 	defer r.Body.Close()
 
 	fields := bson.M{
-		"amount":         req.Amount,
-		"bill_id":        req.BillID,
-		"category_id":    req.CategoryID,
-		"date":           req.Date,
-		"description":    req.Description,
-		"destination_id": req.DestinationID,
-		"income":         req.Income,
-		"owner":          req.Owner,
-		"shared":         req.Shared,
-		"source_id":      req.SourceID,
-		"type":           req.Type,
+		"amount":      req.Amount,
+		"date":        req.Date,
+		"description": req.Description,
+		"income":      req.Income,
+		"owner":       req.Owner,
+		"shared":      req.Shared,
+		"type":        req.Type,
+	}
+
+	if req.BillID != "" {
+		billId, err := primitive.ObjectIDFromHex(req.BillID)
+		if err != nil {
+			http.Error(w, "invalid bill_id", http.StatusBadRequest)
+			return
+		}
+		fields["bill_id"] = billId
+	}
+
+	if req.CategoryID != "" {
+		categoryId, err := primitive.ObjectIDFromHex(req.CategoryID)
+		if err != nil {
+			http.Error(w, "invalid category_id", http.StatusBadRequest)
+			return
+		}
+		fields["category_id"] = categoryId
+	}
+
+	if req.DestinationID != "" {
+		destinationID, err := primitive.ObjectIDFromHex(req.DestinationID)
+		if err != nil {
+			http.Error(w, "invalid destination_id", http.StatusBadRequest)
+			return
+		}
+		fields["destination_id"] = destinationID
+	}
+
+	if req.SourceID != "" {
+		sourceId, err := primitive.ObjectIDFromHex(req.SourceID)
+		if err != nil {
+			http.Error(w, "invalid source_id", http.StatusBadRequest)
+			return
+		}
+		fields["source_id"] = sourceId
 	}
 
 	updated, err := h.transactionStore.Update(r.Context(), id, fields)
