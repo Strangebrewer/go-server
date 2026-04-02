@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,7 +25,46 @@ func (s *TransactionStore) GetAll(ctx context.Context, userID primitive.ObjectID
 	filter := bson.D{{Key: "user_id", Value: userID}}
 
 	if f.Month != "" {
-		filter = append(filter, bson.E{Key: "bill_month", Value: f.Month})
+		monthParts := strings.Split(f.Month, "-")
+		if len(monthParts) != 2 {
+			return nil, fmt.Errorf("GetAll: invalid month format %q", f.Month)
+		}
+		month, err := strconv.Atoi(monthParts[1])
+		if err != nil {
+			return nil, fmt.Errorf("GetAll: invalid month in filter %q: %w", f.Month, err)
+		}
+		year, err := strconv.Atoi(monthParts[0])
+		if err != nil {
+			return nil, fmt.Errorf("GetAll: invalid year in filter %q: %w", f.Month, err)
+		}
+
+		lastMonth := month - 1
+		twoMonthsAgo := month - 2
+		lastMonthYear := year
+		twoMonthsAgoYear := year
+
+		if month == 2 {
+			twoMonthsAgo = 12
+			twoMonthsAgoYear = year - 1
+		}
+
+		if month == 1 {
+			lastMonth = 12
+			lastMonthYear = year - 1
+			twoMonthsAgo = 11
+			twoMonthsAgoYear = year - 1
+		}
+
+		lastBillMonth := fmt.Sprintf("%d-%02d", lastMonthYear, lastMonth)
+		twoMonthsAgoBillMonth := fmt.Sprintf("%d-%02d", twoMonthsAgoYear, twoMonthsAgo)
+
+		months := []string{f.Month, lastBillMonth, twoMonthsAgoBillMonth}
+		monthsFilter := make(bson.A, len(months))
+		for i, m := range months {
+			monthsFilter[i] = m
+		}
+
+		filter = append(filter, bson.E{Key: "bill_month", Value: bson.D{{Key: "$in", Value: monthsFilter}}})
 	}
 
 	if f.Owner != "" {
@@ -36,7 +77,8 @@ func (s *TransactionStore) GetAll(ctx context.Context, userID primitive.ObjectID
 		filter = append(filter, bson.E{Key: "shared", Value: false})
 	}
 
-	cursor, err := s.collection.Find(ctx, filter)
+	opts := options.Find().SetSort(bson.D{{Key: "bill_month", Value: 1}})
+	cursor, err := s.collection.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
